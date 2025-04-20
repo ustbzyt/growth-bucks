@@ -1,0 +1,56 @@
+/* style.css: 统一美化表格、按钮、导航、标题等 */
+body {
+    background: #f8f9fa;
+}
+nav {
+    margin-bottom: 1.5rem;
+}
+h1, h2, h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+.table-category {
+    margin-bottom: 2.5rem;
+    background: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+.table-category thead {
+    background: #e9ecef;
+}
+.category-title {
+    background: #e3f2fd;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem 0.5rem 0 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1976d2;
+}
+.frequency-title {
+    background: #fff3cd;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem 0.5rem 0 0;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #856404;
+    margin-top: 2rem;
+}
+.points-card, .add-points-card, .dashboard-section {
+    background: #fff;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    padding: 1.5rem 1rem 1rem 1rem;
+}
+.points-list-item {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+.add-points-card {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+.dashboard-section {
+    margin-top: 2rem;
+}

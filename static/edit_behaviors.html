@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Behaviors (Drag & Score)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+    .bar-row { display: flex; align-items: center; margin-bottom: 0.5rem; background: #fff; border-radius: 0.4rem; box-shadow: 0 1px 4px rgba(0,0,0,0.03); padding: 0.5rem;}
+    .bar-label { width: 260px; flex-shrink: 0; font-weight: 500; }
+    .bar-bar { height: 28px; background: #1976d2; border-radius: 0.3rem; margin-right: 1rem; transition: width 0.2s;}
+    .bar-score { width: 60px; margin-right: 1rem;}
+    .bar-desc { color: #888; font-size: 0.95em; flex: 1;}
+    .bar-row.dragging { opacity: 0.6; }
+    .bar-score-input { width: 90px; text-align: right; }
+    </style>
+</head>
+<body class="bg-light">
+<div class="container py-4">
+    <nav class="mb-3">
+        <a href="index.html" class="btn btn-outline-primary btn-sm me-2">Dashboard</a>
+        <a href="behaviors.html" class="btn btn-outline-secondary btn-sm me-2">Behaviors Table</a>
+    </nav>
+    <h1 class="mb-4">Edit Behaviors (Drag & Score)</h1>
+    <div class="alert alert-info mb-3">
+        拖拽项目可调整顺序，直接修改分数后点击“保存”按钮即可。
+    </div>
+    <div id="bar-list"></div>
+    <button id="save-btn" class="btn btn-success mt-3">保存修改</button>
+    <div id="save-status" class="mt-3"></div>
+</div>
+<script>
+let behaviors = [];
+function fetchBehaviors() {
+    return fetch('/behaviors').then(r => r.json());
+}
+function renderBars() {
+    // 按分数从高到低排序
+    behaviors.sort((a, b) => b.points - a.points);
+    const maxScore = Math.max(...behaviors.map(b => Math.abs(b.points)), 1);
+    const barList = document.getElementById('bar-list');
+    barList.innerHTML = '';
+    behaviors.forEach((b, idx) => {
+        const row = document.createElement('div');
+        row.className = 'bar-row';
+        row.setAttribute('data-idx', idx);
+        row.innerHTML = `
+            <span class="bar-label">${b.name}</span>
+            <div class="bar-bar" style="width:${Math.abs(b.points)/maxScore*300}px; background:${b.points<0?'#d32f2f':'#1976d2'}"></div>
+            <input type="number" class="form-control form-control-sm bar-score-input" value="${b.points}" style="display:inline-block;" />
+            <span class="bar-desc">${b.desc||''}</span>
+        `;
+        // 分数输入事件
+        row.querySelector('.bar-score-input').addEventListener('change', function() {
+            b.points = Number(this.value);
+            renderBars();
+        });
+        barList.appendChild(row);
+    });
+    // 重新绑定拖拽
+    if (!barList._sortable) {
+        barList._sortable = Sortable.create(barList, {
+            animation: 150,
+            onEnd: function (evt) {
+                // 拖拽后重排 behaviors
+                const oldIdx = evt.oldIndex, newIdx = evt.newIndex;
+                if (oldIdx !== newIdx) {
+                    const moved = behaviors.splice(oldIdx, 1)[0];
+                    behaviors.splice(newIdx, 0, moved);
+                    renderBars();
+                }
+            }
+        });
+    }
+}
+function saveBehaviors() {
+    fetch('/behaviors', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(behaviors)
+    }).then(r => {
+        if (r.ok) {
+            document.getElementById('save-status').innerHTML = '<span class="text-success">保存成功！</span>';
+        } else {
+            document.getElementById('save-status').innerHTML = '<span class="text-danger">保存失败</span>';
+        }
+    });
+}
+document.getElementById('save-btn').onclick = saveBehaviors;
+fetchBehaviors().then(data => {
+    behaviors = data;
+    renderBars();
+});
+</script>
+</body>
+</html>
