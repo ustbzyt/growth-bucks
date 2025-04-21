@@ -1,1 +1,12 @@
-{"Clara Zhang": 0, "Cramer Zhang": 0}
+{
+    "Clara Zhang": {
+        "total": 80,
+        "weekly": 80,
+        "week_key": "2025-04-20~2025-04-26"
+    },
+    "Cramer Zhang": {
+        "total": 60,
+        "weekly": 60,
+        "week_key": "2025-04-20~2025-04-26"
+    }
+}

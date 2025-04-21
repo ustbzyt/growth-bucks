@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory, render_template_string
 import json
 import os
+import datetime
 
 app = Flask(__name__)
 
@@ -11,12 +12,34 @@ CHILDREN = [
     {"id": "cramer", "name": "Cramer Zhang", "cn": "张晏"}
 ]
 
+def get_current_week_key():
+    today = datetime.date.today()
+    start = today - datetime.timedelta(days=today.weekday() + 1 if today.weekday() < 6 else 0)
+    end = start + datetime.timedelta(days=6)
+    return f"{start.isoformat()}~{end.isoformat()}"
+
 # Load points data
 if os.path.exists(POINTS_FILE):
     with open(POINTS_FILE, 'r', encoding='utf-8') as f:
         points = json.load(f)
 else:
-    points = {child['name']: 0 for child in CHILDREN}
+    points = {child['name']: {"total": 0, "weekly": 0, "week_key": get_current_week_key()} for child in CHILDREN}
+
+def reset_weekly_points_if_needed():
+    week_key = get_current_week_key()
+    changed = False
+    for child in CHILDREN:
+        name = child['name']
+        if name not in points or not isinstance(points[name], dict):
+            points[name] = {"total": 0, "weekly": 0, "week_key": week_key}
+            changed = True
+        elif points[name].get("week_key") != week_key:
+            points[name]["weekly"] = 0
+            points[name]["week_key"] = week_key
+            changed = True
+    if changed:
+        with open(POINTS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(points, f, ensure_ascii=False, indent=4)
 
 # Load behaviors data from JSON file
 if os.path.exists(BEHAVIORS_FILE):
@@ -52,22 +75,25 @@ def get_children():
 
 @app.route('/points', methods=['GET'])
 def get_points():
-    """Return points for all valid children"""
-    return jsonify({child['name']: points.get(child['name'], 0) for child in CHILDREN})
+    reset_weekly_points_if_needed()
+    return jsonify({child['name']: {
+        "total": points[child['name']]["total"],
+        "weekly": points[child['name']]["weekly"]
+    } for child in CHILDREN})
 
 @app.route('/points/<child>', methods=['POST'])
 def add_points(child):
-    """Add points for a specific child, body: {"amount": 5}"""
-    # Only allow valid children
+    reset_weekly_points_if_needed()
     valid_names = [c['name'] for c in CHILDREN]
     if child not in valid_names:
         return jsonify({"error": "Invalid child name"}), 400
     data = request.get_json()
     amount = data.get('amount', 0)
-    points[child] = points.get(child, 0) + amount
+    points[child]["total"] += amount
+    points[child]["weekly"] += amount
     # Persist data
     with open(POINTS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(points, f, ensure_ascii=False)
+        json.dump(points, f, ensure_ascii=False, indent=4)
     return jsonify({child: points[child]})
 
 @app.route('/behaviors', methods=['GET', 'POST'])

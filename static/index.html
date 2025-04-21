@@ -56,31 +56,26 @@
         <div class="col-md-6">
             <div class="top-card">
                 <h3 class="mb-3">Add Points</h3>
-                <form id="batch-points-form-top" autocomplete="off">
+                <div>
                     <div class="mb-2">
                         <label for="child" class="form-label">Name</label>
                         <select class="form-select" id="child" required></select>
                     </div>
                     <div id="week-range" class="fw-bold text-primary"></div>
-                </form>
+                </div>
             </div>
         </div>
         <div class="col-md-6">
             <div class="points-card">
                 <h3 class="mb-3">Current Points</h3>
-                <ul id="points-list" class="list-unstyled mb-0"></ul>
+                <div id="points-progress-list"></div>
             </div>
         </div>
     </div>
     <!-- 主体区域：行为表格 -->
-    <form id="batch-points-form">
-        <div class="main-table-card">
-            <div id="behaviors-checkbox-list"></div>
-        </div>
-        <div class="submit-btn-row">
-            <button type="submit" class="btn btn-primary btn-lg">Submit Selected Behaviors</button>
-        </div>
-    </form>
+    <div class="main-table-card">
+        <div id="behaviors-checkbox-list"></div>
+    </div>
     <!-- dashboard extension area -->
     <div class="row">
         <div class="col-12">
@@ -97,13 +92,27 @@
 // Fetch and display points
 function loadPoints() {
     fetch('/points').then(r => r.json()).then(data => {
-        const ul = document.getElementById('points-list');
-        ul.innerHTML = '';
-        Object.entries(data).forEach(([child, pts]) => {
-            const li = document.createElement('li');
-            li.className = 'points-list-item';
-            li.textContent = `${child}: ${pts} pts`;
-            ul.appendChild(li);
+        const div = document.getElementById('points-progress-list');
+        div.innerHTML = '';
+        const WEEKLY_GOAL = 4000;
+        Object.entries(data).forEach(([child, obj]) => {
+            const weekly = obj.weekly || 0;
+            const total = obj.total || 0;
+            const percent = Math.min(100, Math.round(weekly / WEEKLY_GOAL * 100));
+            div.innerHTML += `
+                <div class="mb-2">
+                    <strong>${child}</strong>
+                    <div class="progress" style="height: 24px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: ${percent}%;">
+                            ${weekly} / ${WEEKLY_GOAL} (This week)
+                        </div>
+                    </div>
+                    <div class="small text-muted mt-1">Total: ${total}</div>
+                    <div class="small text-info mt-1">
+                        Every 4000 points can be redeemed for $20.
+                    </div>
+                </div>
+            `;
         });
     });
 }
@@ -112,7 +121,9 @@ let behaviorsData = [];
 function loadBehaviors() {
     fetch('/behaviors').then(r => r.json()).then(data => {
         behaviorsData = data;
-        renderBehaviorsCheckboxList();
+        if (document.getElementById('child').options.length > 0) {
+            renderBehaviorsCheckboxList();
+        }
     });
 }
 function getWeekRange() {
@@ -127,18 +138,80 @@ function getWeekRange() {
     }
     return {start: sunday, end: saturday, text: `${fmt(sunday)} ~ ${fmt(saturday)}`};
 }
+function getStorageKey(child, behavior, type, idx) {
+    const week = getWeekRange();
+    let dateKey = '';
+    if (type === 'daily') {
+        const d = new Date(week.start);
+        d.setDate(d.getDate() + idx);
+        dateKey = d.toISOString().slice(0,10);
+    } else if (type === 'weekly') {
+        dateKey = week.text;
+    } else if (type === 'occasionally') {
+        dateKey = week.text + '-' + idx;
+    }
+    return `submitted_${child}_${behavior}_${type}_${dateKey}`;
+}
+
+// 清理本地存储中过期的提交记录
+function cleanOldSubmissions() {
+    const week = getWeekRange();
+    const validPrefix = `submitted_`;
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(validPrefix) && !key.includes(week.text)) {
+            localStorage.removeItem(key);
+        }
+    }
+}
+
+// 保存和读取 Occasional 行为输入值
+function getOccasionalKey(child, behavior) {
+    return `occasional_${child}_${behavior}`;
+}
+
+// 保存和读取 checkbox 状态
+function getCheckboxKey(child, behavior, type, idx) {
+    return `checkbox_${child}_${behavior}_${type}_${idx}`;
+}
+
+// 标记为已提交/未提交，并保存checkbox状态
+function setCheckboxState(child, behavior, type, idx, checked) {
+    const key = getStorageKey(child, behavior, type, idx);
+    const ckey = getCheckboxKey(child, behavior, type, idx);
+    if (checked) {
+        localStorage.setItem(key, '1');
+        localStorage.setItem(ckey, '1');
+    } else {
+        localStorage.removeItem(key);
+        localStorage.removeItem(ckey);
+    }
+}
+
+// 检查是否已提交（兼容老数据）
+function isSubmitted(child, behavior, type, idx) {
+    const ckey = getCheckboxKey(child, behavior, type, idx);
+    return !!localStorage.getItem(ckey) || !!localStorage.getItem(getStorageKey(child, behavior, type, idx));
+}
+
+// 渲染表格时，checkbox 只根据 checked 状态
 function renderBehaviorsCheckboxList() {
+    cleanOldSubmissions();
     const week = getWeekRange();
     document.getElementById('week-range').textContent = `This week: ${week.text}`;
-    // 分组
+    const child = document.getElementById('child') ? document.getElementById('child').value : '';
     const groups = {daily: [], weekly: [], occasionally: []};
     behaviorsData.forEach(b => {
         if (groups[b.frequency]) groups[b.frequency].push(b);
     });
     const container = document.getElementById('behaviors-checkbox-list');
     container.innerHTML = '';
+
+    let hasTable = false;
+
     // Daily
     if (groups.daily.length) {
+        hasTable = true;
         const tbl = document.createElement('table');
         tbl.className = 'table table-bordered table-sm mb-4';
         const thead = document.createElement('thead');
@@ -159,13 +232,16 @@ function renderBehaviorsCheckboxList() {
         groups.daily.forEach((b, idx) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${b.name}</td>
-                ${[0,1,2,3,4,5,6].map(i =>
-                    `<td class="text-center">
+                <td>
+                    <div>${b.name}</div>
+                </td>
+                ${[0,1,2,3,4,5,6].map(i => {
+                    const checked = (child && isSubmitted(child, b.name, 'daily', i)) ? 'checked' : '';
+                    return `<td class="text-center">
                         <input type="checkbox" class="form-check-input"
-                            name="daily-${idx}" data-behavior="${b.name}" data-points="${b.points}" data-day="${i}">
-                    </td>`
-                ).join('')}
+                            name="daily-${idx}" data-behavior="${b.name}" data-points="${b.points}" data-day="${i}" ${checked}>
+                    </td>`;
+                }).join('')}
                 <td>${b.points}</td>
                 <td><span class="text-muted small">${b.desc}</span></td>
             `;
@@ -173,13 +249,14 @@ function renderBehaviorsCheckboxList() {
         });
         tbl.appendChild(tbody);
         const title = document.createElement('div');
-        title.className = 'frequency-title';
+        title.className = 'frequency-title mt-4 mb-2 fw-bold';
         title.textContent = 'Daily Behaviors';
         container.appendChild(title);
         container.appendChild(tbl);
     }
     // Weekly
     if (groups.weekly.length) {
+        hasTable = true;
         const tbl = document.createElement('table');
         tbl.className = 'table table-bordered table-sm mb-4';
         const thead = document.createElement('thead');
@@ -192,12 +269,15 @@ function renderBehaviorsCheckboxList() {
         tbl.appendChild(thead);
         const tbody = document.createElement('tbody');
         groups.weekly.forEach((b, idx) => {
+            const checked = (child && isSubmitted(child, b.name, 'weekly', 0)) ? 'checked' : '';
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${b.name}</td>
+                <td>
+                    <div>${b.name}</div>
+                </td>
                 <td class="text-center">
                     <input type="checkbox" class="form-check-input"
-                        name="weekly-${idx}" data-behavior="${b.name}" data-points="${b.points}">
+                        name="weekly-${idx}" data-behavior="${b.name}" data-points="${b.points}" ${checked}>
                 </td>
                 <td>${b.points}</td>
                 <td><span class="text-muted small">${b.desc}</span></td>
@@ -206,21 +286,20 @@ function renderBehaviorsCheckboxList() {
         });
         tbl.appendChild(tbody);
         const title = document.createElement('div');
-        title.className = 'frequency-title';
+        title.className = 'frequency-title mt-4 mb-2 fw-bold';
         title.textContent = 'Weekly Behaviors';
         container.appendChild(title);
         container.appendChild(tbl);
     }
     // Occasionally
     if (groups.occasionally.length) {
+        hasTable = true;
         const tbl = document.createElement('table');
         tbl.className = 'table table-bordered table-sm mb-4';
         const thead = document.createElement('thead');
         thead.innerHTML = `<tr>
             <th>Occasional Behavior</th>
-            <th class="text-center">#1</th>
-            <th class="text-center">#2</th>
-            <th class="text-center">#3</th>
+            <th class="text-center">Count</th>
             <th>Points/Time</th>
             <th>Description</th>
         </tr>`;
@@ -228,53 +307,71 @@ function renderBehaviorsCheckboxList() {
         const tbody = document.createElement('tbody');
         groups.occasionally.forEach((b, idx) => {
             const tr = document.createElement('tr');
-            if (b.name === "Redeem 5 min screen time") {
-                // 用输入框代替checkbox
-                tr.innerHTML = `
-                    <td>${b.name}</td>
-                    <td colspan="3" class="text-center">
-                        <input type="number" min="1" value="1" class="form-control form-control-sm redeem-screen-input" 
-                            data-behavior="${b.name}" data-points="${b.points}" style="width:70px;display:inline-block;">
-                        <span class="ms-2 text-danger" id="redeem-total-${idx}">Total: ${b.points}</span>
-                    </td>
-                    <td>${b.points}</td>
-                    <td><span class="text-muted small">${b.desc}</span></td>
-                `;
-            } else {
-                tr.innerHTML = `
-                    <td>${b.name}</td>
-                    ${[0,1,2].map(i =>
-                        `<td class="text-center">
-                            <input type="checkbox" class="form-check-input"
-                                name="occasionally-${idx}" data-behavior="${b.name}" data-points="${b.points}" data-idx="${i}">
-                        </td>`
-                    ).join('')}
-                    <td>${b.points}</td>
-                    <td><span class="text-muted small">${b.desc}</span></td>
-                `;
-            }
+            tr.innerHTML = `
+                <td>
+                    <div>${b.name}</div>
+                </td>
+                <td class="text-center">
+                    <input type="number" min="0" value="0" class="form-control form-control-sm occasional-count-input"
+                        data-behavior="${b.name}" data-points="${b.points}" style="width:70px;display:inline-block;">
+                </td>
+                <td>${b.points}</td>
+                <td><span class="text-muted small">${b.desc}</span></td>
+            `;
             tbody.appendChild(tr);
         });
         tbl.appendChild(tbody);
         const title = document.createElement('div');
-        title.className = 'frequency-title';
+        title.className = 'frequency-title mt-4 mb-2 fw-bold';
         title.textContent = 'Occasional Behaviors';
         container.appendChild(title);
         container.appendChild(tbl);
-
-        // 监听兑换份数输入，动态显示总扣分
-        const redeemInput = tbl.querySelector('.redeem-screen-input');
-        if (redeemInput) {
-            redeemInput.addEventListener('input', function() {
-                let n = Math.max(1, parseInt(this.value) || 1);
-                this.value = n;
-                const pts = Number(this.getAttribute('data-points'));
-                const total = n * pts;
-                document.getElementById('redeem-total-0').textContent = `Total: ${total}`;
-            });
-        }
     }
+
+    if (!hasTable) {
+        container.innerHTML = '<div class="alert alert-warning">No behaviors found.</div>';
+    }
+
+    // 绑定 checkbox 状态变化事件
+    container.querySelectorAll('input[type=checkbox]').forEach(cb => {
+        const behavior = cb.getAttribute('data-behavior');
+        const type = cb.name.startsWith('daily') ? 'daily' : (cb.name.startsWith('weekly') ? 'weekly' : '');
+        const idx = cb.name.startsWith('daily') ? cb.getAttribute('data-day') : 0;
+        // 恢复checkbox状态
+        const ckey = getCheckboxKey(child, behavior, type, idx);
+        cb.checked = !!localStorage.getItem(ckey);
+
+        cb.addEventListener('change', function() {
+            setCheckboxState(child, behavior, type, idx, cb.checked);
+            // 只提交本次变化的积分
+            const delta = cb.checked ? Number(cb.getAttribute('data-points')) : -Number(cb.getAttribute('data-points'));
+            updatePointsForChild(child, delta);
+        });
+    });
+    // 绑定 occasional 行为输入框事件
+    const lastOccasionalValues = {}; // 用于记录每个行为上次的值
+
+    container.querySelectorAll('.occasional-count-input').forEach(input => {
+        const behavior = input.getAttribute('data-behavior');
+        // 恢复当前 child 的输入值
+        const saved = localStorage.getItem(getOccasionalKey(child, behavior));
+        let lastValue = saved !== null ? parseInt(saved) : 0;
+        input.value = lastValue;
+        lastOccasionalValues[behavior] = lastValue;
+
+        input.addEventListener('change', function() {
+            const newValue = Math.max(0, parseInt(input.value) || 0);
+            const delta = (newValue - lastOccasionalValues[behavior]) * Number(input.getAttribute('data-points'));
+            lastOccasionalValues[behavior] = newValue;
+            // 保存到 localStorage
+            localStorage.setItem(getOccasionalKey(child, behavior), newValue);
+            if (delta !== 0) {
+                updatePointsForChild(child, delta);
+            }
+        });
+    });
 }
+
 // Fetch children and fill dropdown
 function loadChildren() {
     fetch('/children').then(r => r.json()).then(children => {
@@ -286,43 +383,34 @@ function loadChildren() {
             opt.textContent = `${child.name} (${child.cn})`;
             select.appendChild(opt);
         });
-    });
-}
-// 批量提交
-document.getElementById('batch-points-form').onsubmit = function(e) {
-    e.preventDefault();
-    const child = document.getElementById('child').value;
-    // 统计所有勾选
-    let total = 0;
-    const checked = Array.from(document.querySelectorAll('#behaviors-checkbox-list input[type=checkbox]:checked'));
-    checked.forEach(cb => {
-        total += Number(cb.getAttribute('data-points'));
-    });
-    // 统计兑换屏幕时间
-    const redeemInput = document.querySelector('.redeem-screen-input');
-    if (redeemInput) {
-        let n = Math.max(1, parseInt(redeemInput.value) || 1);
-        total += n * Number(redeemInput.getAttribute('data-points'));
-    }
-    if (total === 0) return alert('Please select at least one behavior');
-    fetch(`/points/${encodeURIComponent(child)}`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({amount: total})
-    }).then(r => r.json()).then(() => {
-        loadPoints();
-        // 清空所有勾选和输入
-        checked.forEach(cb => cb.checked = false);
-        if (redeemInput) {
-            redeemInput.value = 1;
-            document.getElementById('redeem-total-0').textContent = `Total: ${Number(redeemInput.getAttribute('data-points'))}`;
+        if (children.length > 0) {
+            select.value = children[0].name;
+        }
+        if (behaviorsData.length > 0) {
+            renderBehaviorsCheckboxList();
         }
     });
-};
-// Init
+}
+
+// 监听孩子切换时刷新表格
+document.getElementById('child').addEventListener('change', function() {
+    renderBehaviorsCheckboxList();
+});
+
+// 初始化
 loadPoints();
 loadBehaviors();
 loadChildren();
+
+function updatePointsForChild(child, delta) {
+    fetch(`/points/${encodeURIComponent(child)}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({amount: delta})
+    }).then(r => r.json()).then(() => {
+        loadPoints();
+    });
+}
 </script>
 </body>
 </html>
