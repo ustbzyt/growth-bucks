@@ -56,10 +56,6 @@ def index():
 def index_html():
     return send_from_directory('static', 'index.html')
 
-@app.route('/behaviors.html')
-def behaviors_page():
-    return send_from_directory('static', 'behaviors.html')
-
 @app.route('/behaviors_by_frequency.html')
 def behaviors_by_frequency_page():
     return send_from_directory('static', 'behaviors_by_frequency.html')
@@ -67,6 +63,12 @@ def behaviors_by_frequency_page():
 @app.route('/edit_behaviors.html')
 def edit_behaviors_page():
     return send_from_directory('static', 'edit_behaviors.html')
+
+@app.route('/behaviors_by_category.html')
+def behaviors_by_category():
+    print("Current working directory:", os.getcwd())
+    print("File exists:", os.path.exists(os.path.join('static', 'behaviors_by_category.html')))
+    return send_from_directory('static', 'behaviors_by_category.html')
 
 @app.route('/children', methods=['GET'])
 def get_children():

@@ -16,9 +16,35 @@
     <h1 class="mb-4">Behaviors for Points (Grouped by Category)</h1>
     <div id="category-tables"></div>
 </div>
-<script src="js/common.js"></script>
-<script src="js/behaviors.js"></script>
 <script>
+function fetchBehaviors() {
+    return fetch('/behaviors').then(r => r.json());
+}
+function renderBehaviorsByCategory(behaviors, container) {
+    const groups = {};
+    behaviors.forEach(b => {
+        if (!groups[b.category]) groups[b.category] = [];
+        groups[b.category].push(b);
+    });
+    container.innerHTML = '';
+    Object.keys(groups).forEach(cat => {
+        const title = document.createElement('div');
+        title.className = 'category-title mt-4 mb-2 fw-bold';
+        title.textContent = cat;
+        const table = document.createElement('table');
+        table.className = 'table table-bordered table-striped table-category';
+        table.innerHTML = `<thead><tr><th>Name</th><th>Points</th><th>Description</th><th>Frequency</th></tr></thead>`;
+        const tbody = document.createElement('tbody');
+        groups[cat].forEach(b => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${b.name}</td><td>${b.points}</td><td>${b.desc}</td><td>${b.frequency}</td>`;
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        container.appendChild(title);
+        container.appendChild(table);
+    });
+}
 fetchBehaviors().then(data => {
     renderBehaviorsByCategory(data, document.getElementById('category-tables'));
 });
