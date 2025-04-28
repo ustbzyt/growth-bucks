@@ -407,6 +407,18 @@ function updatePointsForChild(child, delta) {
         loadPoints();
     });
 }
+
+let lastWeekText = '';
+function checkWeekChangeAndUpdate() {
+    const week = getWeekRange();
+    if (week.text !== lastWeekText) {
+        lastWeekText = week.text;
+        renderBehaviorsCheckboxList();
+        loadPoints();
+    }
+}
+lastWeekText = getWeekRange().text;
+setInterval(checkWeekChangeAndUpdate, 60 * 60 * 1000); // 每小时检查一次
 </script>
 </body>
 </html>

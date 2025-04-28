@@ -274,9 +274,9 @@
     },
     {
         "category": "Screen",
-        "desc": "Redeem 5 minutes of extra screen time for 30 points",
+        "desc": "Redeem 15 minutes of extra screen time for 30 points",
         "frequency": "occasionally",
-        "name": "Redeem 5 min screen time",
+        "name": "Redeem 15 min screen time",
         "points": -30
     }
 ]
