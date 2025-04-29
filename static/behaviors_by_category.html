@@ -8,11 +8,13 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="bg-light">
+<script>
+    fetch('static/sidebar.html').then(r => r.text()).then(html => {
+        document.body.insertAdjacentHTML('afterbegin', html);
+        document.body.style.paddingLeft = '220px';
+    });
+</script>
 <div class="container py-4">
-    <nav class="mb-3">
-        <a href="index.html" class="btn btn-outline-primary btn-sm me-2">Back to Dashboard</a>
-        <a href="behaviors_by_frequency.html" class="btn btn-outline-secondary btn-sm">Group by Frequency</a>
-    </nav>
     <h1 class="mb-4">Behaviors for Points (Grouped by Category)</h1>
     <div id="category-tables"></div>
 </div>

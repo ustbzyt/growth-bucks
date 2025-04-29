@@ -48,6 +48,36 @@ if os.path.exists(BEHAVIORS_FILE):
 else:
     behaviors = []
 
+REDEMPTIONS_FILE = 'redemptions.json'
+POINTS_HISTORY_FILE = 'points_history.json'
+
+# 加载兑换历史
+if os.path.exists(REDEMPTIONS_FILE):
+    with open(REDEMPTIONS_FILE, 'r', encoding='utf-8') as f:
+        redemptions = json.load(f)
+else:
+    redemptions = {}
+
+# 加载每周积分历史
+if os.path.exists(POINTS_HISTORY_FILE):
+    with open(POINTS_HISTORY_FILE, 'r', encoding='utf-8') as f:
+        points_history = json.load(f)
+else:
+    points_history = {}
+
+# 每周积分历史自动记录（可在每次 get_points 时调用）
+def update_points_history():
+    week_key = get_current_week_key()
+    for child in CHILDREN:
+        name = child['name']
+        if name not in points_history:
+            points_history[name] = []
+        # 检查是否已有本周记录
+        if not any(item['week'] == week_key for item in points_history[name]):
+            points_history[name].append({'week': week_key, 'points': points[name]['weekly']})
+            with open(POINTS_HISTORY_FILE, 'w', encoding='utf-8') as f:
+                json.dump(points_history, f, ensure_ascii=False, indent=4)
+
 @app.route('/')
 def index():
     return send_from_directory('static', 'index.html')
@@ -70,6 +100,10 @@ def behaviors_by_category():
     print("File exists:", os.path.exists(os.path.join('static', 'behaviors_by_category.html')))
     return send_from_directory('static', 'behaviors_by_category.html')
 
+@app.route('/allowance.html')
+def allowance_page():
+    return send_from_directory('static', 'allowance.html')
+
 @app.route('/children', methods=['GET'])
 def get_children():
     """Get all children info"""
@@ -78,6 +112,7 @@ def get_children():
 @app.route('/points', methods=['GET'])
 def get_points():
     reset_weekly_points_if_needed()
+    update_points_history()
     return jsonify({child['name']: {
         "total": points[child['name']]["total"],
         "weekly": points[child['name']]["weekly"]
@@ -109,6 +144,46 @@ def behaviors_api():
         with open(BEHAVIORS_FILE, 'w', encoding='utf-8') as f:
             json.dump(behaviors, f, ensure_ascii=False, indent=4)
         return jsonify({"status": "ok"})
+
+@app.route('/allowance/<child>')
+def get_allowance(child):
+    if child not in points:
+        return jsonify({'error': 'Child not found'}), 404
+    return jsonify({'allowance': points[child].get('allowance', 0)})
+
+@app.route('/redemptions/<child>')
+def get_redemptions(child):
+    return jsonify(redemptions.get(child, []))
+
+@app.route('/points_history/<child>')
+def get_points_history(child):
+    return jsonify(points_history.get(child, []))
+
+@app.route('/redeem/<child>', methods=['POST'])
+def redeem_points(child):
+    data = request.get_json()
+    points_needed = data.get('points', 0)
+    amount = data.get('amount', 0)
+    if child not in points or points[child]['total'] < points_needed:
+        return jsonify({'error': 'Not enough points'}), 400
+    # 扣除积分
+    points[child]['total'] -= points_needed
+    # 增加 allowance
+    points[child]['allowance'] = points[child].get('allowance', 0) + amount
+    # 记录兑换历史
+    if child not in redemptions:
+        redemptions[child] = []
+    redemptions[child].append({
+        'date': datetime.datetime.now().strftime('%Y-%m-%d %H:%M'),
+        'points': points_needed,
+        'amount': amount
+    })
+    # 持久化
+    with open(POINTS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(points, f, ensure_ascii=False, indent=4)
+    with open(REDEMPTIONS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(redemptions, f, ensure_ascii=False, indent=4)
+    return jsonify({'status': 'ok'})
 
 if __name__ == '__main__':
     app.run(debug=True)

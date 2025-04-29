@@ -17,11 +17,13 @@
     </style>
 </head>
 <body class="bg-light">
+<script>
+    fetch('static/sidebar.html').then(r => r.text()).then(html => {
+        document.body.insertAdjacentHTML('afterbegin', html);
+        document.body.style.paddingLeft = '220px';
+    });
+</script>
 <div class="container py-4">
-    <nav class="mb-3">
-        <a href="index.html" class="btn btn-outline-primary btn-sm me-2">Dashboard</a>
-        <a href="behaviors.html" class="btn btn-outline-secondary btn-sm me-2">Behaviors Table</a>
-    </nav>
     <h1 class="mb-4">Edit Behaviors (Drag & Score)</h1>
     <div class="alert alert-info mb-3">
         拖拽项目可调整顺序，直接修改分数后点击“保存”按钮即可。

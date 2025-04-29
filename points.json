@@ -1,12 +1,14 @@
 {
     "Clara Zhang": {
-        "total": 1410,
-        "weekly": 0,
+        "allowance": 598,
+        "total": 1520,
+        "weekly": 110,
         "week_key": "2025-04-27~2025-05-03"
     },
     "Cramer Zhang": {
-        "total": 1190,
-        "weekly": 0,
+        "allowance": 400,
+        "total": 1360,
+        "weekly": 170,
         "week_key": "2025-04-27~2025-05-03"
     }
 }

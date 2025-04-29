@@ -40,12 +40,14 @@
     </style>
 </head>
 <body class="bg-light">
-<div class="container py-4">
-    <nav class="mb-3">
-        <a href="index.html" class="btn btn-outline-primary btn-sm me-2">Dashboard</a>
-        <a href="behaviors_by_category.html" class="btn btn-outline-secondary btn-sm me-2">Behaviors Table</a>
-        <a href="edit_behaviors.html" class="btn btn-outline-warning btn-sm">Edit Behaviors</a>
-    </nav>
+<script>
+fetch('static/sidebar.html').then(r => r.text()).then(html => {
+    document.body.insertAdjacentHTML('afterbegin', html);
+    document.body.style.paddingLeft = '160px'; // 140px + 20px间距
+});
+</script>
+<div class="container py-4" style="width:auto;overflow-x:auto;">
+    <!-- 已移除顶部导航栏 -->
     <h1 class="mb-4">Points Management System</h1>
     <!-- 顶部区域 -->
     <div class="row mb-3">
@@ -90,7 +92,7 @@ function loadPoints() {
     fetch('/points').then(r => r.json()).then(data => {
         const div = document.getElementById('points-progress-list');
         div.innerHTML = '';
-        const WEEKLY_GOAL = 4000;
+        const WEEKLY_GOAL = 2000;
         Object.entries(data).forEach(([child, obj]) => {
             const weekly = obj.weekly || 0;
             const total = obj.total || 0;
@@ -98,12 +100,13 @@ function loadPoints() {
             div.innerHTML += `
                 <div class="mb-2">
                     <strong>${child}</strong>
-                    <div class="progress" style="height: 24px;">
+                    <div class="progress" style="height: 24px; overflow: hidden;">
                         <div class="progress-bar bg-success" role="progressbar" style="width: ${percent}%;">
-                            ${weekly} / ${WEEKLY_GOAL} (This week)
                         </div>
                     </div>
-                    <div class="small text-muted mt-1">Total: ${total}</div>
+                    <div class="small text-dark mt-1">
+                        ${weekly} / ${WEEKLY_GOAL} (This week)
+                    </div>
                     <div class="small text-info mt-1">
                         Every 4000 points can be redeemed for $20.
                     </div>
