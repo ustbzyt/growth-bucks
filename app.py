@@ -65,6 +65,32 @@ if os.path.exists(POINTS_HISTORY_FILE):
 else:
     points_history = {}
 
+# --- 新增：启动时同步本周积分到历史 ---
+def sync_points_history_with_current():
+    week_key = get_current_week_key()
+    changed = False
+    for child in CHILDREN:
+        name = child['name']
+        weekly_points = points.get(name, {}).get('weekly', 0)
+        if name not in points_history:
+            points_history[name] = []
+        # 如果本周没有记录，则追加
+        if not any(item['week'] == week_key for item in points_history[name]):
+            points_history[name].append({'week': week_key, 'points': weekly_points})
+            changed = True
+        # 如果本周有记录但分数不一致，则更新
+        else:
+            for item in points_history[name]:
+                if item['week'] == week_key and item['points'] != weekly_points:
+                    item['points'] = weekly_points
+                    changed = True
+    if changed:
+        with open(POINTS_HISTORY_FILE, 'w', encoding='utf-8') as f:
+            json.dump(points_history, f, ensure_ascii=False, indent=4)
+
+# --- 在加载完 points_history 后立即同步 ---
+sync_points_history_with_current()
+
 # 每周积分历史自动记录（可在每次 get_points 时调用）
 def update_points_history():
     week_key = get_current_week_key()
