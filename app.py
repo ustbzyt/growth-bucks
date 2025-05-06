@@ -130,6 +130,14 @@ def behaviors_by_category():
 def allowance_page():
     return send_from_directory('static', 'allowance.html')
 
+@app.route('/static/<path:path>')
+def serve_static(path):
+    return send_from_directory('static', path)
+
+@app.route('/sounds/<path:filename>')
+def serve_sound(filename):
+    return send_from_directory('static/sounds', filename)
+
 @app.route('/children', methods=['GET'])
 def get_children():
     """Get all children info"""

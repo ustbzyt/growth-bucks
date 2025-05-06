@@ -1,6 +1,7 @@
 /* style.css: 统一美化表格、按钮、导航、标题等 */
 body {
     background: #f8f9fa;
+    background-color: #f8f9fa;
 }
 nav {
     margin-bottom: 1.5rem;
@@ -32,7 +33,7 @@ h1, h2, h3 {
     border-radius: 0.5rem 0.5rem 0 0;
     font-size: 1.15rem;
     font-weight: 600;
-    color: #856404;
+    color: #495057;
     margin-top: 2rem;
 }
 .points-card, .add-points-card, .dashboard-section {
@@ -54,3 +55,6 @@ h1, h2, h3 {
 .dashboard-section {
     margin-top: 2rem;
 }
+
+/* Add your custom styles here */
+/* 可以添加更多自定义样式 */

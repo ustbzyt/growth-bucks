@@ -28,6 +28,20 @@
         "points": 50
     },
     {
+        "category": "Kindness",
+        "desc": "Prepare a surprise note or small gift for family",
+        "frequency": "occasionally",
+        "name": "Write surprise note/gift for family",
+        "points": 50
+    },
+    {
+        "category": "Creativity",
+        "desc": "Organize your art/school supplies",
+        "frequency": "weekly",
+        "name": "Organize art/school supplies",
+        "points": 40
+    },
+    {
         "category": "Learning",
         "desc": "Practice piano seriously for 15 minutes",
         "frequency": "daily",
@@ -40,6 +54,83 @@
         "frequency": "daily",
         "name": "Go to bed on time without fuss",
         "points": 40
+    },
+    {
+        "category": "Learning",
+        "desc": "Read a non-comic or more challenging book for at least 15 minutes",
+        "frequency": "daily",
+        "name": "Read a challenging book for 15 minutes",
+        "points": 40
+    },
+    {
+        "category": "Learning",
+        "desc": "Practice writing 2 Chinese characters",
+        "frequency": "daily",
+        "name": "Practice Chinese writing 2 characters",
+        "points": 40
+    },
+    {
+        "category": "Learning",
+        "desc": "Practice math problems for at least 15 minutes",
+        "frequency": "daily",
+        "name": "Practice math problems",
+        "points": 40
+    },
+    {
+        "category": "Learning",
+        "desc": "Learn and write down 2 new Chinese words",
+        "frequency": "daily",
+        "name": "Learn 2 new Chinese words",
+        "points": 40
+    },
+    {
+        "category": "Learning",
+        "desc": "Practice speaking Chinese for at least 10 minutes",
+        "frequency": "daily",
+        "name": "Practice Chinese speaking 10 minutes",
+        "points": 40
+    },
+    {
+        "category": "Learning",
+        "desc": "Review flashcards or take a vocabulary quiz",
+        "frequency": "daily",
+        "name": "Review Chinese flashcards/quiz",
+        "points": 40
+    },
+    {
+        "category": "Learning",
+        "desc": "Teach family or sibling something new learned today",
+        "frequency": "occasionally",
+        "name": "Teach family or sibling new knowledge",
+        "points": 40
+    },
+    {
+        "category": "Kindness",
+        "desc": "Proactively contact grandparents",
+        "frequency": "weekly",
+        "name": "Call/message grandparents",
+        "points": 40
+    },
+    {
+        "category": "Family",
+        "desc": "Organize a book or toy shelf",
+        "frequency": "weekly",
+        "name": "Organize a book/toy shelf",
+        "points": 40
+    },
+    {
+        "category": "Learning",
+        "desc": "Finish all homework before sleep",
+        "frequency": "daily",
+        "name": "Finish all homework before sleep",
+        "points": 30
+    },
+    {
+        "category": "Family",
+        "desc": "Help clean up after any family meal (breakfast, lunch, or dinner)",
+        "frequency": "daily",
+        "name": "Help clean up after family meal",
+        "points": 30
     },
     {
         "category": "Reflection",
@@ -57,9 +148,30 @@
     },
     {
         "category": "Creativity",
+        "desc": "Dance, stretch, or sing for at least 10 minutes",
+        "frequency": "daily",
+        "name": "Music or movement activity (10+ min)",
+        "points": 30
+    },
+    {
+        "category": "Creativity",
         "desc": "Finish a previously unfinished project",
         "frequency": "occasionally",
         "name": "Finish an unfinished project",
+        "points": 30
+    },
+    {
+        "category": "Kindness",
+        "desc": "Proactively help sibling with chores",
+        "frequency": "daily",
+        "name": "Help sibling with chores",
+        "points": 30
+    },
+    {
+        "category": "Healthy",
+        "desc": "Outdoor activity for more than 15 minutes",
+        "frequency": "daily",
+        "name": "Outdoor activity 15+ minutes",
         "points": 30
     },
     {
@@ -75,6 +187,13 @@
         "frequency": "daily",
         "name": "Write/say three things you are grateful for",
         "points": 30
+    },
+    {
+        "category": "Family",
+        "desc": "Modestly tidy your room or desk",
+        "frequency": "daily",
+        "name": "Modestly tidy room or desk",
+        "points": 20
     },
     {
         "category": "Family",
@@ -105,24 +224,17 @@
         "points": 20
     },
     {
+        "category": "Family",
+        "desc": "Help with grocery shopping (carry bags, etc.)",
+        "frequency": "weekly",
+        "name": "Help with grocery shopping",
+        "points": 20
+    },
+    {
         "category": "Reflection",
         "desc": "Say a positive self-affirmation",
         "frequency": "daily",
         "name": "Say a self-affirmation",
-        "points": 20
-    },
-    {
-        "category": "Family",
-        "desc": "Modestly tidy your room or desk",
-        "frequency": "daily",
-        "name": "Modestly tidy room or desk",
-        "points": 10
-    },
-    {
-        "category": "Learning",
-        "desc": "Finish all homework before sleep",
-        "frequency": "daily",
-        "name": "Finish all homework before sleep",
         "points": 10
     },
     {
@@ -133,150 +245,38 @@
         "points": 10
     },
     {
-        "category": "Family",
-        "desc": "After choosing clothes in the morning, put the unchosen ones back neatly into the drawer or closet",
-        "frequency": "daily",
-        "name": "Put back unchosen clothes in the morning",
-        "points": 0
-    },
-    {
-        "category": "Family",
-        "desc": "After each trip, take all your trash and personal items out of the car",
-        "frequency": "daily",
-        "name": "Take trash and belongings out of the car",
-        "points": 0
+        "category": "Creativity",
+        "desc": "Draw and explain your work to family",
+        "frequency": "occasionally",
+        "name": "Draw and explain to family",
+        "points": 10
     },
     {
         "category": "Family",
         "desc": "Organize shoes or bags at the door",
         "frequency": "daily",
         "name": "Organize shoes or bags at the door",
-        "points": 0
-    },
-    {
-        "category": "Creativity",
-        "desc": "Draw and explain your work to family",
-        "frequency": "occasionally",
-        "name": "Draw and explain to family",
-        "points": 0
+        "points": 10
     },
     {
         "category": "Family",
-        "desc": "Help with grocery shopping (carry bags, etc.)",
-        "frequency": "weekly",
-        "name": "Help with grocery shopping",
-        "points": 0
-    },
-    {
-        "category": "Healthy",
-        "desc": "Outdoor activity for more than 15 minutes",
+        "desc": "After each trip, take all your trash and personal items out of the car",
         "frequency": "daily",
-        "name": "Outdoor activity 15+ minutes",
-        "points": 0
-    },
-    {
-        "category": "Kindness",
-        "desc": "Proactively help sibling with chores",
-        "frequency": "daily",
-        "name": "Help sibling with chores",
-        "points": 0
-    },
-    {
-        "category": "Creativity",
-        "desc": "Dance, stretch, or sing for at least 10 minutes",
-        "frequency": "daily",
-        "name": "Music or movement activity (10+ min)",
-        "points": 0
+        "name": "Take trash and belongings out of the car",
+        "points": 10
     },
     {
         "category": "Family",
-        "desc": "Help clean up after any family meal (breakfast, lunch, or dinner)",
+        "desc": "After choosing clothes in the morning, put the unchosen ones back neatly into the drawer or closet",
         "frequency": "daily",
-        "name": "Help clean up after family meal",
-        "points": 0
-    },
-    {
-        "category": "Family",
-        "desc": "Organize a book or toy shelf",
-        "frequency": "weekly",
-        "name": "Organize a book/toy shelf",
-        "points": 0
-    },
-    {
-        "category": "Kindness",
-        "desc": "Proactively contact grandparents",
-        "frequency": "weekly",
-        "name": "Call/message grandparents",
-        "points": 0
-    },
-    {
-        "category": "Learning",
-        "desc": "Teach family or sibling something new learned today",
-        "frequency": "occasionally",
-        "name": "Teach family or sibling new knowledge",
-        "points": 0
-    },
-    {
-        "category": "Learning",
-        "desc": "Review flashcards or take a vocabulary quiz",
-        "frequency": "daily",
-        "name": "Review Chinese flashcards/quiz",
-        "points": 0
-    },
-    {
-        "category": "Learning",
-        "desc": "Practice speaking Chinese for at least 10 minutes",
-        "frequency": "daily",
-        "name": "Practice Chinese speaking 10 minutes",
-        "points": 0
-    },
-    {
-        "category": "Learning",
-        "desc": "Learn and write down 2 new Chinese words",
-        "frequency": "daily",
-        "name": "Learn 2 new Chinese words",
-        "points": 0
-    },
-    {
-        "category": "Learning",
-        "desc": "Practice math problems for at least 15 minutes",
-        "frequency": "daily",
-        "name": "Practice math problems",
-        "points": 0
-    },
-    {
-        "category": "Learning",
-        "desc": "Practice writing 2 Chinese characters",
-        "frequency": "daily",
-        "name": "Practice Chinese writing 2 characters",
-        "points": 0
-    },
-    {
-        "category": "Learning",
-        "desc": "Read a non-comic or more challenging book for at least 15 minutes",
-        "frequency": "daily",
-        "name": "Read a challenging book for 15 minutes",
-        "points": 0
-    },
-    {
-        "category": "Creativity",
-        "desc": "Organize your art/school supplies",
-        "frequency": "weekly",
-        "name": "Organize art/school supplies",
-        "points": 0
-    },
-    {
-        "category": "Kindness",
-        "desc": "Prepare a surprise note or small gift for family",
-        "frequency": "occasionally",
-        "name": "Write surprise note/gift for family",
-        "points": 0
+        "name": "Put back unchosen clothes in the morning",
+        "points": 10
     },
     {
         "category": "Screen",
-        "desc": "Redeem 15 minutes of extra screen time for 30 points",
+        "desc": "Redeem 5 minutes of extra screen time for 30 points",
         "frequency": "occasionally",
-        "name": "Redeem 15 min screen time",
+        "name": "Redeem 5 min screen time",
         "points": -30
     }
 ]

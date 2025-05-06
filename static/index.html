@@ -5,7 +5,7 @@
     <title>Points Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css">
     <style>
     .top-card {
         background: #fff;
@@ -37,10 +37,40 @@
         padding: 1.5rem 1rem 1rem 1rem;
         margin-bottom: 1.5rem;
     }
+    .checkbox-animate-pop {
+        animation: pop-scale 0.4s cubic-bezier(.36,1.5,.64,1) 1;
+    }
+    @keyframes pop-scale {
+        0% { transform: scale(1);}
+        40% { transform: scale(1.4);}
+        100% { transform: scale(1);}
+    }
+    .checkbox-animate-flash {
+        animation: flash-bg 0.5s linear 1;
+    }
+    @keyframes flash-bg {
+        0% { background: #fff;}
+        30% { background: #ffe066;}
+        60% { background: #fff;}
+        100% { background: #fff;}
+    }
+    .checkbox-animate-shake {
+        animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    @keyframes shake {
+        10%, 90% { transform: translateX(-2px);}
+        20%, 80% { transform: translateX(4px);}
+        30%, 50%, 70% { transform: translateX(-8px);}
+        40%, 60% { transform: translateX(8px);}
+        100% { transform: none;}
+    }
     </style>
 </head>
 <body class="bg-light">
 <script>
+function randomChoice(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
 fetch('static/sidebar.html').then(r => r.text()).then(html => {
     document.body.insertAdjacentHTML('afterbegin', html);
     document.body.style.paddingLeft = '160px'; // 140px + 20px间距
@@ -193,6 +223,96 @@ function isSubmitted(child, behavior, type, idx) {
     return !!localStorage.getItem(ckey) || !!localStorage.getItem(getStorageKey(child, behavior, type, idx));
 }
 
+// 简化音效配置，所有音效放在一个数组中
+const soundEffects = {
+    all: {
+        files: [
+            "static/sounds/1.wav",
+            "static/sounds/2.wav",
+            "static/sounds/3.wav",
+            "static/sounds/4.wav",
+            "static/sounds/5.wav",
+            "static/sounds/6.wav",
+            "static/sounds/7.wav",
+            "static/sounds/8.wav",
+            "static/sounds/9.wav",
+            "static/sounds/10.wav",
+            "static/sounds/11.wav",
+            "static/sounds/12.wav",
+            "static/sounds/13.wav",
+            "static/sounds/14.mp3",
+            "static/sounds/15.wav",
+            "static/sounds/16.mp3"
+        ],
+        volume: 0.8  // 统一音量
+    }
+};
+
+// 预加载所有音效并确保只加载一次
+const audioCache = {};
+async function preloadSounds() {
+    for (const file of soundEffects.all.files) {
+        if (!audioCache[file]) {
+            try {
+                const audio = new Audio(file);
+                await audio.load(); // 等待加载完成
+                audioCache[file] = audio;
+            } catch (e) {
+                console.error(`Failed to load sound: ${file}`, e);
+            }
+        }
+    }
+}
+
+// 修改音效播放函数，避免重复播放同一个音效
+let lastPlayedSound = null;
+function playSoundForPoints(points) {
+    try {
+        let soundFile;
+        do {
+            soundFile = randomChoice(soundEffects.all.files);
+        } while (soundFile === lastPlayedSound && soundEffects.all.files.length > 1);
+        
+        lastPlayedSound = soundFile;
+        const audio = audioCache[soundFile];
+        if (audio && audio.readyState >= 2) { // HAVE_CURRENT_DATA
+            audio.pause();
+            audio.currentTime = 0;
+            audio.volume = soundEffects.all.volume;
+            audio.play().catch(err => {
+                console.log("Audio play error:", err);
+            });
+        }
+    } catch (e) {
+        console.log("Audio error:", e);
+    }
+}
+
+// 初始化时预加载音效
+preloadSounds();
+
+// 动画类型
+const animationClasses = [
+    { min: 0, max: 10, cls: "checkbox-animate-flash" },
+    { min: 11, max: 30, cls: "checkbox-animate-pop" },
+    { min: 31, max: 99, cls: "checkbox-animate-shake" },
+    { min: 100, max: 9999, cls: "checkbox-animate-pop checkbox-animate-flash" }
+];
+
+function animateCheckbox(cb, points) {
+    // cb: checkbox element
+    // 动画加在checkbox的父td上
+    let td = cb.closest('td');
+    if (!td) return;
+    const anim = animationClasses.find(e => points >= e.min && points <= e.max);
+    if (anim) {
+        td.classList.add(...anim.cls.split(' '));
+        setTimeout(() => {
+            td.classList.remove(...anim.cls.split(' '));
+        }, 600);
+    }
+}
+
 // 渲染表格时，checkbox 只根据 checked 状态
 function renderBehaviorsCheckboxList() {
     cleanOldSubmissions();
@@ -229,6 +349,7 @@ function renderBehaviorsCheckboxList() {
         tbl.appendChild(thead);
         const tbody = document.createElement('tbody');
         groups.daily.forEach((b, idx) => {
+            if (b.points == 0) return; // 跳过分数为0的
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
@@ -268,6 +389,7 @@ function renderBehaviorsCheckboxList() {
         tbl.appendChild(thead);
         const tbody = document.createElement('tbody');
         groups.weekly.forEach((b, idx) => {
+            if (b.points == 0) return; // 跳过分数为0的
             const checked = (child && isSubmitted(child, b.name, 'weekly', 0)) ? 'checked' : '';
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -305,6 +427,7 @@ function renderBehaviorsCheckboxList() {
         tbl.appendChild(thead);
         const tbody = document.createElement('tbody');
         groups.occasionally.forEach((b, idx) => {
+            if (b.points == 0) return; // 跳过分数为0的
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
@@ -344,6 +467,11 @@ function renderBehaviorsCheckboxList() {
             setCheckboxState(child, behavior, type, idx, cb.checked);
             // 只提交本次变化的积分
             const delta = cb.checked ? Number(cb.getAttribute('data-points')) : -Number(cb.getAttribute('data-points'));
+            // 动画和音效（仅正向勾选时触发）
+            if (cb.checked && delta > 0) {
+                playSoundForPoints(delta);
+                animateCheckbox(cb, delta);
+            }
             updatePointsForChild(child, delta);
         });
     });
