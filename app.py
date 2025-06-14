@@ -158,13 +158,36 @@ def add_points(child):
     valid_names = [c['name'] for c in CHILDREN]
     if child not in valid_names:
         return jsonify({"error": "Invalid child name"}), 400
+    
     data = request.get_json()
     amount = data.get('amount', 0)
+    behavior_name = data.get('behavior') # 获取行为名称
+
+    # 更新积分
     points[child]["total"] += amount
     points[child]["weekly"] += amount
-    # Persist data
+
+    # 如果是兑换行为（负分且有behavior_name），则记录
+    if amount < 0 and behavior_name:
+        if child not in redemptions:
+            redemptions[child] = []
+        
+        # 从 behaviors.json 中查找对应的描述
+        behavior_info = next((b for b in behaviors if b['name'] == behavior_name), None)
+        desc = behavior_info['desc'] if behavior_info else behavior_name
+
+        redemptions[child].append({
+            'date': datetime.datetime.now().strftime('%Y-%m-%d %H:%M'),
+            'points': -amount, # 记录为正数
+            'desc': desc
+        })
+        with open(REDEMPTIONS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(redemptions, f, ensure_ascii=False, indent=4)
+
+    # 持久化积分数据
     with open(POINTS_FILE, 'w', encoding='utf-8') as f:
         json.dump(points, f, ensure_ascii=False, indent=4)
+        
     return jsonify({child: points[child]})
 
 @app.route('/behaviors', methods=['GET', 'POST'])
@@ -192,32 +215,6 @@ def get_redemptions(child):
 @app.route('/points_history/<child>')
 def get_points_history(child):
     return jsonify(points_history.get(child, []))
-
-@app.route('/redeem/<child>', methods=['POST'])
-def redeem_points(child):
-    data = request.get_json()
-    points_needed = data.get('points', 0)
-    amount = data.get('amount', 0)
-    if child not in points or points[child]['total'] < points_needed:
-        return jsonify({'error': 'Not enough points'}), 400
-    # 扣除积分
-    points[child]['total'] -= points_needed
-    # 增加 allowance
-    points[child]['allowance'] = points[child].get('allowance', 0) + amount
-    # 记录兑换历史
-    if child not in redemptions:
-        redemptions[child] = []
-    redemptions[child].append({
-        'date': datetime.datetime.now().strftime('%Y-%m-%d %H:%M'),
-        'points': points_needed,
-        'amount': amount
-    })
-    # 持久化
-    with open(POINTS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(points, f, ensure_ascii=False, indent=4)
-    with open(REDEMPTIONS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(redemptions, f, ensure_ascii=False, indent=4)
-    return jsonify({'status': 'ok'})
 
 if __name__ == '__main__':
     app.run(debug=True)

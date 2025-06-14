@@ -122,7 +122,7 @@ function loadPoints() {
     fetch('/points').then(r => r.json()).then(data => {
         const div = document.getElementById('points-progress-list');
         div.innerHTML = '';
-        const WEEKLY_GOAL = 2000;
+        const WEEKLY_GOAL = 1000;
         Object.entries(data).forEach(([child, obj]) => {
             const weekly = obj.weekly || 0;
             const total = obj.total || 0;
@@ -138,7 +138,7 @@ function loadPoints() {
                         ${weekly} / ${WEEKLY_GOAL} (This week)
                     </div>
                     <div class="small text-info mt-1">
-                        Every 4000 points can be redeemed for $20.
+                        Every 1000 points can be redeemed for $20.
                     </div>
                 </div>
             `;
@@ -319,42 +319,40 @@ function renderBehaviorsCheckboxList() {
     const week = getWeekRange();
     document.getElementById('week-range').textContent = `This week: ${week.text}`;
     const child = document.getElementById('child') ? document.getElementById('child').value : '';
-    const groups = {daily: [], weekly: [], occasionally: []};
-    behaviorsData.forEach(b => {
-        if (groups[b.frequency]) groups[b.frequency].push(b);
-    });
+    
+    // 我们现在只关心 daily 和 occasionally (用于兑换)
+    const dailyBehaviors = behaviorsData.filter(b => b.frequency === 'daily');
+    const redemptionOptions = behaviorsData.filter(b => b.frequency === 'occasionally' && b.points < 0);
+
     const container = document.getElementById('behaviors-checkbox-list');
     container.innerHTML = '';
 
-    let hasTable = false;
-
-    // Daily
-    if (groups.daily.length) {
-        hasTable = true;
+    // 创建一个统一的表格来展示所有每日习惯
+    if (dailyBehaviors.length) {
         const tbl = document.createElement('table');
         tbl.className = 'table table-bordered table-sm mb-4';
-        const thead = document.createElement('thead');
-        thead.innerHTML = `<tr>
-            <th>Daily Behavior</th>
-            <th class="text-center">Sun</th>
-            <th class="text-center">Mon</th>
-            <th class="text-center">Tue</th>
-            <th class="text-center">Wed</th>
-            <th class="text-center">Thu</th>
-            <th class="text-center">Fri</th>
-            <th class="text-center">Sat</th>
-            <th>Points/Day</th>
-            <th>Description</th>
-        </tr>`;
-        tbl.appendChild(thead);
+        tbl.innerHTML = `
+            <thead>
+                <tr>
+                    <th>Core Daily Habit</th>
+                    <th class="text-center">Sun</th>
+                    <th class="text-center">Mon</th>
+                    <th class="text-center">Tue</th>
+                    <th class="text-center">Wed</th>
+                    <th class="text-center">Thu</th>
+                    <th class="text-center">Fri</th>
+                    <th class="text-center">Sat</th>
+                    <th>Points</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+        `;
         const tbody = document.createElement('tbody');
-        groups.daily.forEach((b, idx) => {
-            if (b.points == 0) return; // 跳过分数为0的
+        dailyBehaviors.forEach((b, idx) => {
+            if (b.points <= 0) return; // 只显示得分项
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>
-                    <div>${b.name}</div>
-                </td>
+                <td>${b.name}</td>
                 ${[0,1,2,3,4,5,6].map(i => {
                     const checked = (child && isSubmitted(child, b.name, 'daily', i)) ? 'checked' : '';
                     return `<td class="text-center">
@@ -368,106 +366,48 @@ function renderBehaviorsCheckboxList() {
             tbody.appendChild(tr);
         });
         tbl.appendChild(tbody);
-        const title = document.createElement('div');
-        title.className = 'frequency-title mt-4 mb-2 fw-bold';
-        title.textContent = 'Daily Behaviors';
-        container.appendChild(title);
-        container.appendChild(tbl);
-    }
-    // Weekly
-    if (groups.weekly.length) {
-        hasTable = true;
-        const tbl = document.createElement('table');
-        tbl.className = 'table table-bordered table-sm mb-4';
-        const thead = document.createElement('thead');
-        thead.innerHTML = `<tr>
-            <th>Weekly Behavior</th>
-            <th class="text-center">Done This Week</th>
-            <th>Points</th>
-            <th>Description</th>
-        </tr>`;
-        tbl.appendChild(thead);
-        const tbody = document.createElement('tbody');
-        groups.weekly.forEach((b, idx) => {
-            if (b.points == 0) return; // 跳过分数为0的
-            const checked = (child && isSubmitted(child, b.name, 'weekly', 0)) ? 'checked' : '';
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>
-                    <div>${b.name}</div>
-                </td>
-                <td class="text-center">
-                    <input type="checkbox" class="form-check-input"
-                        name="weekly-${idx}" data-behavior="${b.name}" data-points="${b.points}" ${checked}>
-                </td>
-                <td>${b.points}</td>
-                <td><span class="text-muted small">${b.desc}</span></td>
-            `;
-            tbody.appendChild(tr);
-        });
-        tbl.appendChild(tbody);
-        const title = document.createElement('div');
-        title.className = 'frequency-title mt-4 mb-2 fw-bold';
-        title.textContent = 'Weekly Behaviors';
-        container.appendChild(title);
-        container.appendChild(tbl);
-    }
-    // Occasionally
-    if (groups.occasionally.length) {
-        hasTable = true;
-        const tbl = document.createElement('table');
-        tbl.className = 'table table-bordered table-sm mb-4';
-        const thead = document.createElement('thead');
-        thead.innerHTML = `<tr>
-            <th>Occasional Behavior</th>
-            <th class="text-center">Count</th>
-            <th>Points/Time</th>
-            <th>Description</th>
-        </tr>`;
-        tbl.appendChild(thead);
-        const tbody = document.createElement('tbody');
-        groups.occasionally.forEach((b, idx) => {
-            if (b.points == 0) return; // 跳过分数为0的
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>
-                    <div>${b.name}</div>
-                </td>
-                <td class="text-center">
-                    <input type="number" min="0" value="0" class="form-control form-control-sm occasional-count-input"
-                        data-behavior="${b.name}" data-points="${b.points}" style="width:70px;display:inline-block;">
-                </td>
-                <td>${b.points}</td>
-                <td><span class="text-muted small">${b.desc}</span></td>
-            `;
-            tbody.appendChild(tr);
-        });
-        tbl.appendChild(tbody);
-        const title = document.createElement('div');
-        title.className = 'frequency-title mt-4 mb-2 fw-bold';
-        title.textContent = 'Occasional Behaviors';
-        container.appendChild(title);
         container.appendChild(tbl);
     }
 
-    if (!hasTable) {
-        container.innerHTML = '<div class="alert alert-warning">No behaviors found.</div>';
+    // 为兑换项创建一个单独的区域
+    if (redemptionOptions.length) {
+        const redemptionDiv = document.createElement('div');
+        redemptionDiv.className = 'redemption-section mt-4 p-3 border rounded';
+        const title = document.createElement('h5');
+        title.textContent = 'Redeem Points';
+        title.className = 'mb-3';
+        redemptionDiv.appendChild(title);
+        
+        redemptionOptions.forEach(b => {
+            const redemptionItem = document.createElement('div');
+            redemptionItem.className = 'd-flex justify-content-between align-items-center mb-2';
+            redemptionItem.innerHTML = `
+                <span>${b.name} (${b.desc})</span>
+                <button class="btn btn-warning btn-sm" data-behavior="${b.name}" data-points="${b.points}">
+                    Redeem for ${-b.points} points
+                </button>
+            `;
+            redemptionDiv.appendChild(redemptionItem);
+        });
+        container.appendChild(redemptionDiv);
+    }
+    
+    if (!dailyBehaviors.length && !redemptionOptions.length) {
+        container.innerHTML = '<div class="alert alert-warning">No behaviors defined.</div>';
     }
 
-    // 绑定 checkbox 状态变化事件
+    // 绑定 daily checkbox 事件
     container.querySelectorAll('input[type=checkbox]').forEach(cb => {
         const behavior = cb.getAttribute('data-behavior');
-        const type = cb.name.startsWith('daily') ? 'daily' : (cb.name.startsWith('weekly') ? 'weekly' : '');
-        const idx = cb.name.startsWith('daily') ? cb.getAttribute('data-day') : 0;
-        // 恢复checkbox状态
+        const type = 'daily';
+        const idx = cb.getAttribute('data-day');
+        
         const ckey = getCheckboxKey(child, behavior, type, idx);
         cb.checked = !!localStorage.getItem(ckey);
 
         cb.addEventListener('change', function() {
             setCheckboxState(child, behavior, type, idx, cb.checked);
-            // 只提交本次变化的积分
             const delta = cb.checked ? Number(cb.getAttribute('data-points')) : -Number(cb.getAttribute('data-points'));
-            // 动画和音效（仅正向勾选时触发）
             if (cb.checked && delta > 0) {
                 playSoundForPoints(delta);
                 animateCheckbox(cb, delta);
@@ -475,25 +415,14 @@ function renderBehaviorsCheckboxList() {
             updatePointsForChild(child, delta);
         });
     });
-    // 绑定 occasional 行为输入框事件
-    const lastOccasionalValues = {}; // 用于记录每个行为上次的值
 
-    container.querySelectorAll('.occasional-count-input').forEach(input => {
-        const behavior = input.getAttribute('data-behavior');
-        // 恢复当前 child 的输入值
-        const saved = localStorage.getItem(getOccasionalKey(child, behavior));
-        let lastValue = saved !== null ? parseInt(saved) : 0;
-        input.value = lastValue;
-        lastOccasionalValues[behavior] = lastValue;
-
-        input.addEventListener('change', function() {
-            const newValue = Math.max(0, parseInt(input.value) || 0);
-            const delta = (newValue - lastOccasionalValues[behavior]) * Number(input.getAttribute('data-points'));
-            lastOccasionalValues[behavior] = newValue;
-            // 保存到 localStorage
-            localStorage.setItem(getOccasionalKey(child, behavior), newValue);
-            if (delta !== 0) {
-                updatePointsForChild(child, delta);
+    // 绑定兑换按钮事件
+    container.querySelectorAll('.redemption-section button').forEach(button => {
+        button.addEventListener('click', function() {
+            const behavior = this.getAttribute('data-behavior');
+            const points = Number(this.getAttribute('data-points'));
+            if (confirm(`Are you sure you want to redeem "${behavior}" for ${-points} points?`)) {
+                updatePointsForChild(child, points, behavior);
             }
         });
     });
@@ -529,11 +458,15 @@ loadPoints();
 loadBehaviors();
 loadChildren();
 
-function updatePointsForChild(child, delta) {
+function updatePointsForChild(child, delta, behavior = null) {
+    const payload = { amount: delta };
+    if (behavior) {
+        payload.behavior = behavior;
+    }
     fetch(`/points/${encodeURIComponent(child)}`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({amount: delta})
+        body: JSON.stringify(payload)
     }).then(r => r.json()).then(() => {
         loadPoints();
     });
